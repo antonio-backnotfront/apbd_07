@@ -1,0 +1,6 @@
+@apbd_assignment_05_remake_HostAddress = http://localhost:5012
+
+GET {{apbd_assignment_05_remake_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
