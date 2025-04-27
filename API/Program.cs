@@ -1,20 +1,22 @@
-using apbd_assignment_05_remake;
-// using apbd_assignment_05;
+using API;
+using Logic;
+using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
-var connectionString = builder.Configuration.GetConnectionString("UniversityDatabase");
-// Add services to the container.
-builder.Services.AddControllers(); // ✅ Must be added
-builder.Services.AddAuthorization();
+// Connection string (read from appsettings.json)
+var connectionString = builder.Configuration.GetConnectionString("Database");
+
+// Add services
+builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-builder.Services.AddSingleton<DeviceManager>(sp => new DeviceManager("input.txt"));
+// Inject DeviceService
+builder.Services.AddScoped<IDeviceService>(sp => new DeviceService(connectionString));
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
@@ -22,9 +24,7 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
-
 app.UseAuthorization();
-
 app.MapControllers();
 
 app.Run();
