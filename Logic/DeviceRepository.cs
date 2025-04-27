@@ -1,6 +1,6 @@
 using Microsoft.Data.SqlClient;
 using Models;
-
+using System.Data;
 
 namespace Logic;
 
@@ -227,4 +227,43 @@ public class DeviceRepository : IDeviceRepository
     private Device MapDevice(SqlDataReader reader)
     {
         var id = reader.GetInt32(reader.GetOrdinal("Id"));
-        var name = reader.
+        var name = reader.GetString(reader.GetOrdinal("Name"));
+        var isTurnedOn = reader.GetBoolean(reader.GetOrdinal("IsTurnedOn"));
+
+        if (!reader.IsDBNull(reader.GetOrdinal("IpAddress")))
+        {
+            return new EmbeddedDevice
+            {
+                Id = id,
+                Name = name,
+                IsTurnedOn = isTurnedOn,
+                IpAddress = reader.GetString(reader.GetOrdinal("IpAddress")),
+                NetworkName = reader.GetString(reader.GetOrdinal("NetworkName"))
+            };
+        }
+        else if (!reader.IsDBNull(reader.GetOrdinal("OperatingSystem")))
+        {
+            return new PersonalComputer
+            {
+                Id = id,
+                Name = name,
+                IsTurnedOn = isTurnedOn,
+                OperatingSystem = reader.GetString(reader.GetOrdinal("OperatingSystem"))
+            };
+        }
+        else if (!reader.IsDBNull(reader.GetOrdinal("BatteryPercentage")))
+        {
+            return new Smartwatch
+            {
+                Id = id,
+                Name = name,
+                IsTurnedOn = isTurnedOn,
+                BatteryPercentage = reader.GetInt32(reader.GetOrdinal("BatteryPercentage"))
+            };
+        }
+        else
+        {
+            throw new Exception("Unknown device type in database.");
+        }
+    }
+}

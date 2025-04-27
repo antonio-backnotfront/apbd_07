@@ -13,7 +13,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 // Inject DeviceService
-builder.Services.AddScoped<IDeviceService>(sp => new DeviceService(connectionString));
+builder.Services.AddScoped<IDeviceRepository>(sp => new DeviceRepository(connectionString));
 
 var app = builder.Build();
 
