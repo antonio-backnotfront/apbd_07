@@ -1,0 +1,8 @@
+/Users/solianyk/Desktop/cs/apbd/apbd_assignment_05_remake/Models/obj/Debug/net8.0/Models.csproj.AssemblyReference.cache
+/Users/solianyk/Desktop/cs/apbd/apbd_assignment_05_remake/Models/obj/Debug/net8.0/Models.GeneratedMSBuildEditorConfig.editorconfig
+/Users/solianyk/Desktop/cs/apbd/apbd_assignment_05_remake/Models/obj/Debug/net8.0/Models.AssemblyInfoInputs.cache
+/Users/solianyk/Desktop/cs/apbd/apbd_assignment_05_remake/Models/obj/Debug/net8.0/Models.AssemblyInfo.cs
+/Users/solianyk/Desktop/cs/apbd/apbd_assignment_05_remake/Models/obj/Debug/net8.0/Models.csproj.CoreCompileInputs.cache
+/Users/solianyk/Desktop/cs/apbd/apbd_assignment_05_remake/Models/obj/Debug/net8.0/Models.MvcApplicationPartsAssemblyInfo.cs
+/Users/solianyk/Desktop/cs/apbd/apbd_assignment_05_remake/Models/obj/Debug/net8.0/Models.MvcApplicationPartsAssemblyInfo.cache
+/Users/solianyk/Desktop/cs/apbd/apbd_assignment_05_remake/Models/obj/Debug/net8.0/Models.sourcelink.json

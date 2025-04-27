@@ -4,9 +4,9 @@ namespace Logic;
 
 public interface IDeviceRepository
 {
-    Task<IEnumerable<Device>> GetAllDevicesAsync();
-    Task<Device?> GetDeviceByIdAsync(int id);
-    Task<int> AddDeviceAsync(Device device);
-    Task UpdateDeviceAsync(Device device);
-    Task DeleteDeviceAsync(int id);
+    IEnumerable<Device> GetAllDevices();
+    Device? GetDeviceById(int id);
+    int AddDevice(Device device);
+    void UpdateDevice(Device device);
+    void DeleteDevice(int id);
 }

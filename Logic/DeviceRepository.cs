@@ -13,12 +13,12 @@ public class DeviceRepository : IDeviceRepository
         _connectionString = connectionString;
     }
 
-    public async Task<IEnumerable<Device>> GetAllDevicesAsync()
+    public IEnumerable<Device> GetAllDevices()
     {
         var devices = new List<Device>();
 
-        await using var connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync();
+        using var connection = new SqlConnection(_connectionString);
+        connection.Open();
 
         var command = new SqlCommand(@"
             SELECT d.Id, d.Name, d.IsTurnedOn, 
@@ -30,9 +30,9 @@ public class DeviceRepository : IDeviceRepository
             LEFT JOIN PersonalComputer pc ON pc.Id = d.Id
             LEFT JOIN Smartwatch sw ON sw.Id = d.Id", connection);
 
-        await using var reader = await command.ExecuteReaderAsync();
+        using var reader = command.ExecuteReader();
 
-        while (await reader.ReadAsync())
+        while (reader.Read())
         {
             devices.Add(MapDevice(reader));
         }
@@ -40,10 +40,10 @@ public class DeviceRepository : IDeviceRepository
         return devices;
     }
 
-    public async Task<Device?> GetDeviceByIdAsync(int id)
+    public Device? GetDeviceById(int id)
     {
-        await using var connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync();
+        using var connection = new SqlConnection(_connectionString);
+        connection.Open();
 
         var command = new SqlCommand(@"
             SELECT d.Id, d.Name, d.IsTurnedOn, 
@@ -58,9 +58,9 @@ public class DeviceRepository : IDeviceRepository
 
         command.Parameters.AddWithValue("@Id", id);
 
-        await using var reader = await command.ExecuteReaderAsync();
+        using var reader = command.ExecuteReader();
 
-        if (await reader.ReadAsync())
+        if (reader.Read())
         {
             return MapDevice(reader);
         }
@@ -68,83 +68,83 @@ public class DeviceRepository : IDeviceRepository
         return null;
     }
 
-    public async Task<int> AddDeviceAsync(Device device)
+    public int AddDevice(Device device)
     {
-        await using var connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync();
-        await using var transaction = await connection.BeginTransactionAsync();
+        using var connection = new SqlConnection(_connectionString);
+        connection.Open();
+        using var transaction = connection.BeginTransaction();
 
         try
         {
             var insertDeviceCommand = new SqlCommand(@"
                 INSERT INTO Device (Name, IsTurnedOn)
                 OUTPUT INSERTED.Id
-                VALUES (@Name, @IsTurnedOn)", connection, (SqlTransaction)transaction);
+                VALUES (@Name, @IsTurnedOn)", connection, transaction);
 
             insertDeviceCommand.Parameters.AddWithValue("@Name", device.Name);
             insertDeviceCommand.Parameters.AddWithValue("@IsTurnedOn", device.IsTurnedOn);
 
-            var newId = (int)(await insertDeviceCommand.ExecuteScalarAsync())!;
+            var newId = (int)insertDeviceCommand.ExecuteScalar()!;
 
             switch (device)
             {
                 case EmbeddedDevice ed:
                     var insertEmbedded = new SqlCommand(@"
                         INSERT INTO EmbeddedDevice (Id, IpAddress, NetworkName)
-                        VALUES (@Id, @IpAddress, @NetworkName)", connection, (SqlTransaction)transaction);
+                        VALUES (@Id, @IpAddress, @NetworkName)", connection, transaction);
                     insertEmbedded.Parameters.AddWithValue("@Id", newId);
                     insertEmbedded.Parameters.AddWithValue("@IpAddress", ed.IpAddress);
                     insertEmbedded.Parameters.AddWithValue("@NetworkName", ed.NetworkName);
-                    await insertEmbedded.ExecuteNonQueryAsync();
+                    insertEmbedded.ExecuteNonQuery();
                     break;
 
                 case PersonalComputer pc:
                     var insertPC = new SqlCommand(@"
                         INSERT INTO PersonalComputer (Id, OperatingSystem)
-                        VALUES (@Id, @OperatingSystem)", connection, (SqlTransaction)transaction);
+                        VALUES (@Id, @OperatingSystem)", connection, transaction);
                     insertPC.Parameters.AddWithValue("@Id", newId);
                     insertPC.Parameters.AddWithValue("@OperatingSystem", pc.OperatingSystem ?? (object)DBNull.Value);
-                    await insertPC.ExecuteNonQueryAsync();
+                    insertPC.ExecuteNonQuery();
                     break;
 
                 case Smartwatch sw:
                     var insertSW = new SqlCommand(@"
                         INSERT INTO Smartwatch (Id, BatteryPercentage)
-                        VALUES (@Id, @BatteryPercentage)", connection, (SqlTransaction)transaction);
+                        VALUES (@Id, @BatteryPercentage)", connection, transaction);
                     insertSW.Parameters.AddWithValue("@Id", newId);
                     insertSW.Parameters.AddWithValue("@BatteryPercentage", sw.BatteryPercentage);
-                    await insertSW.ExecuteNonQueryAsync();
+                    insertSW.ExecuteNonQuery();
                     break;
             }
 
-            await transaction.CommitAsync();
+            transaction.Commit();
             return newId;
         }
         catch
         {
-            await transaction.RollbackAsync();
+            transaction.Rollback();
             throw;
         }
     }
 
-    public async Task UpdateDeviceAsync(Device device)
+    public void UpdateDevice(Device device)
     {
-        await using var connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync();
-        await using var transaction = await connection.BeginTransactionAsync();
+        using var connection = new SqlConnection(_connectionString);
+        connection.Open();
+        using var transaction = connection.BeginTransaction();
 
         try
         {
             var updateDeviceCommand = new SqlCommand(@"
                 UPDATE Device
                 SET Name = @Name, IsTurnedOn = @IsTurnedOn
-                WHERE Id = @Id", connection, (SqlTransaction)transaction);
+                WHERE Id = @Id", connection, transaction);
 
             updateDeviceCommand.Parameters.AddWithValue("@Id", device.Id);
             updateDeviceCommand.Parameters.AddWithValue("@Name", device.Name);
             updateDeviceCommand.Parameters.AddWithValue("@IsTurnedOn", device.IsTurnedOn);
 
-            await updateDeviceCommand.ExecuteNonQueryAsync();
+            updateDeviceCommand.ExecuteNonQuery();
 
             switch (device)
             {
@@ -152,74 +152,72 @@ public class DeviceRepository : IDeviceRepository
                     var updateEmbedded = new SqlCommand(@"
                         UPDATE EmbeddedDevice
                         SET IpAddress = @IpAddress, NetworkName = @NetworkName
-                        WHERE Id = @Id", connection, (SqlTransaction)transaction);
+                        WHERE Id = @Id", connection, transaction);
                     updateEmbedded.Parameters.AddWithValue("@Id", ed.Id);
                     updateEmbedded.Parameters.AddWithValue("@IpAddress", ed.IpAddress);
                     updateEmbedded.Parameters.AddWithValue("@NetworkName", ed.NetworkName);
-                    await updateEmbedded.ExecuteNonQueryAsync();
+                    updateEmbedded.ExecuteNonQuery();
                     break;
 
                 case PersonalComputer pc:
                     var updatePC = new SqlCommand(@"
                         UPDATE PersonalComputer
                         SET OperatingSystem = @OperatingSystem
-                        WHERE Id = @Id", connection, (SqlTransaction)transaction);
+                        WHERE Id = @Id", connection, transaction);
                     updatePC.Parameters.AddWithValue("@Id", pc.Id);
                     updatePC.Parameters.AddWithValue("@OperatingSystem", pc.OperatingSystem ?? (object)DBNull.Value);
-                    await updatePC.ExecuteNonQueryAsync();
+                    updatePC.ExecuteNonQuery();
                     break;
 
                 case Smartwatch sw:
                     var updateSW = new SqlCommand(@"
                         UPDATE Smartwatch
                         SET BatteryPercentage = @BatteryPercentage
-                        WHERE Id = @Id", connection, (SqlTransaction)transaction);
+                        WHERE Id = @Id", connection, transaction);
                     updateSW.Parameters.AddWithValue("@Id", sw.Id);
                     updateSW.Parameters.AddWithValue("@BatteryPercentage", sw.BatteryPercentage);
-                    await updateSW.ExecuteNonQueryAsync();
+                    updateSW.ExecuteNonQuery();
                     break;
             }
 
-            await transaction.CommitAsync();
+            transaction.Commit();
         }
         catch
         {
-            await transaction.RollbackAsync();
+            transaction.Rollback();
             throw;
         }
     }
 
-    public async Task DeleteDeviceAsync(int id)
+    public void DeleteDevice(int id)
     {
-        await using var connection = new SqlConnection(_connectionString);
-        await connection.OpenAsync();
-        await using var transaction = await connection.BeginTransactionAsync();
+        using var connection = new SqlConnection(_connectionString);
+        connection.Open();
+        using var transaction = connection.BeginTransaction();
 
         try
         {
-            // Delete from specific tables first
-            var deleteEmbedded = new SqlCommand("DELETE FROM EmbeddedDevice WHERE Id = @Id", connection, (SqlTransaction)transaction);
+            var deleteEmbedded = new SqlCommand("DELETE FROM EmbeddedDevice WHERE Id = @Id", connection, transaction);
             deleteEmbedded.Parameters.AddWithValue("@Id", id);
-            await deleteEmbedded.ExecuteNonQueryAsync();
+            deleteEmbedded.ExecuteNonQuery();
 
-            var deletePC = new SqlCommand("DELETE FROM PersonalComputer WHERE Id = @Id", connection, (SqlTransaction)transaction);
+            var deletePC = new SqlCommand("DELETE FROM PersonalComputer WHERE Id = @Id", connection, transaction);
             deletePC.Parameters.AddWithValue("@Id", id);
-            await deletePC.ExecuteNonQueryAsync();
+            deletePC.ExecuteNonQuery();
 
-            var deleteSW = new SqlCommand("DELETE FROM Smartwatch WHERE Id = @Id", connection, (SqlTransaction)transaction);
+            var deleteSW = new SqlCommand("DELETE FROM Smartwatch WHERE Id = @Id", connection, transaction);
             deleteSW.Parameters.AddWithValue("@Id", id);
-            await deleteSW.ExecuteNonQueryAsync();
+            deleteSW.ExecuteNonQuery();
 
-            // Finally delete from Device
-            var deleteDevice = new SqlCommand("DELETE FROM Device WHERE Id = @Id", connection, (SqlTransaction)transaction);
+            var deleteDevice = new SqlCommand("DELETE FROM Device WHERE Id = @Id", connection, transaction);
             deleteDevice.Parameters.AddWithValue("@Id", id);
-            await deleteDevice.ExecuteNonQueryAsync();
+            deleteDevice.ExecuteNonQuery();
 
-            await transaction.CommitAsync();
+            transaction.Commit();
         }
         catch
         {
-            await transaction.RollbackAsync();
+            transaction.Rollback();
             throw;
         }
     }
