@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 var builder = WebApplication.CreateBuilder(args);
 
 // Connection string (read from appsettings.json)
-var connectionString = builder.Configuration.GetConnectionString("Database");
+var connectionString = builder.Configuration.GetConnectionString("UniversityDatabase");
 
 // Add services
 builder.Services.AddControllers();
